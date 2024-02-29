@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  Active
+  Inactive
+}
+
+enum Variation {
+  Connect
+  Disconnect
+}
+
+model Station {
+  id   String @id @default(cuid())
+  name String
+  status Status @default(Inactive)
+  devices UsbDevice[]
+  events Event[]
+}
+
+model UsbDevice {
+  id          String  @id @default(cuid())
+  vendor_id   String
+  product_id  String
+  files       String[]
+  description String?
+  serial_number String? 
+  event     Event[]
+  station     Station? @relation(fields: [station_id], references: [id], onUpdate: Cascade)
+  station_id   String?
+}
+
+model Event {
+  id       String   @id @default(cuid())
+  user     String
+  variation Variation
+  tracked  Boolean
+  station     Station @relation(fields: [station_id], references: [id], onUpdate: Cascade)
+  station_id   String
+  usbdevice UsbDevice @relation(fields: [usbdevice_id], references: [id])
+  usbdevice_id String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
