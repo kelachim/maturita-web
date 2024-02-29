@@ -15,7 +15,7 @@ export default function Entry({ obj }) {
           <div key={key} className="inline-block overflow-y-hidden overflow-x-auto border-[1px] p-[6px] w-[200px] border-t-0 border-l-0 border-[#212633]">
             {obj[key].id}
           </div>
-          : <div key={key} className="inline-block overflow-y-hidden overflow-x-auto border-[1px] p-[6px] w-[200px] border-t-0 border-l-0 border-[#212633]">
+          : <div key={key} className="inline-block hide-scrollbar overflow-y-hidden overflow-x-auto border-[1px] p-[6px] w-[200px] border-t-0 border-l-0 border-[#212633]">
             {obj[key]}
           </div>
         }
