@@ -36,7 +36,7 @@ export default async function handler(
           product_id: data.device.product_id,
           description: data.device.description,
           serial_number: data.device.serial_number,
-          files: data.device.files 
+          files: data.device.files != null ? data.device.files : []
         },
       });
     }

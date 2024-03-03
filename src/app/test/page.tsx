@@ -37,7 +37,6 @@ function Stations({data, isLoading, error} : any) {
           <div className="flex-none border-[1px] border-l-0 p-1 font-semibold text-sm min-w-[200px] border-t-0 border-[#212633]" key={key}>{key}</div>
         ))}
       </div>
-
       {data.map((station: Station) => (
           <Entry
             obj={station}
