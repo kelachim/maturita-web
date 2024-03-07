@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, Event } from "@prisma/client"
+import { PrismaClient, Event, UsbDevice } from "@prisma/client"
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,7 +7,7 @@ export default async function handler(
 ) {
   let prisma = new PrismaClient();
 
-  const events = await prisma.usbDevice.findMany()
+  const devices = await prisma.usbDevice.findMany()
 
-  res.status(200).json(events as Event[] | []);
+  res.status(200).json(devices as UsbDevice[] | []);
 }

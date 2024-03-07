@@ -1,12 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma, PrismaClient } from '@prisma/client';
+import webPush, { PushSubscription } from "web-push";
+
+interface SubscriptionKeys{
+  p256dh: string,
+  auth: string
+}
+
+const vapidKeys = webPush.generateVAPIDKeys();
+
+webPush.setVapidDetails(
+  'mailto:web-push-demo@example.com',
+  "BA7vAUHWcniqnXUmgJIWHrqZAfuAWJ0BxYdNfjXGbBVygM9tRaiqTTvgYgZ5wT1l6Tjtzlfs_uLs0_b0DSMwdTk",
+  vapidKeys.privateKey
+);
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const prisma = new PrismaClient();
-
+  console.log(vapidKeys)
   try {
     let data = req.body;
 
@@ -60,7 +74,36 @@ export default async function handler(
         },
       },
     });
-
+    if (data.tracked == true){
+      const subscriptions = await prisma.subscription.findMany();
+  
+      const sendNotifications = subscriptions.map(async (subscription) => {
+        try {
+          const pushSubscription: PushSubscription = {
+            endpoint: subscription.endpoint,
+            keys: subscription.keys as unknown as SubscriptionKeys
+          };
+          const station = await prisma.station.findUnique({where:{
+            id: data.station_id
+          }});
+          const payload = JSON.stringify({
+            title: 'Tracked device connected❗',
+            body: `Tracked device connected on station ${station?.name}`
+          });
+          await webPush.sendNotification(pushSubscription, payload, {
+            vapidDetails: {
+              subject: 'mailto:your@email.com',
+              publicKey: vapidKeys.publicKey,
+              privateKey: vapidKeys.privateKey,
+            },
+          });
+        } catch (error) {
+          console.error('Error sending notification:', error);
+        }
+      });
+      await Promise.all(sendNotifications);
+    }
+    
     res.status(200).json(event);
   } catch (error) {
     res.status(500).json(error);
