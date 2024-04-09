@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, type Station } from "@prisma/client"
+import { PrismaClient, type UsbDevice } from "@prisma/client"
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,7 +7,9 @@ export default async function handler(
 ) {
   const prisma = new PrismaClient();
 
-  const stations = await prisma.station.findMany()
+  const classroom = await prisma.classroom.findMany({include: {
+    stations: true
+  }})
 
-  res.status(200).json(stations as Station[] | []);
+  res.status(200).json(classroom);
 }

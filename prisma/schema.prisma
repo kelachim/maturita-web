@@ -7,47 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Status {
-  Active
-  Inactive
-}
-
-enum Variation {
-  Connect
-  Disconnect
-}
-
 model Station {
-  id   String @id @default(cuid())
-  name String
-  status Status @default(Inactive)
-  devices UsbDevice[]
-  events Event[]
+  id          String      @id @default(cuid())
+  name        String
+  status      Status      @default(Inactive)
+  classroomId String?
+  events      Event[]
+  classroom   Classroom?  @relation(fields: [classroomId], references: [id])
+  devices     UsbDevice[]
 }
 
 model UsbDevice {
-  id          String  @id @default(cuid())
-  vendor_id   String
-  product_id  String
-  files       String[]
-  description String?
-  serial_number String? 
-  event     Event[]
-  station     Station? @relation(fields: [station_id], references: [id], onUpdate: Cascade)
-  station_id   String?
+  id            String   @id @default(cuid())
+  vendor_id     String
+  product_id    String
+  files         String[]
+  description   String?
+  serial_number String?
+  stationId     String?
+  event         Event[]
+  station       Station? @relation(fields: [stationId], references: [id])
 }
 
 model Event {
-  id       String   @id @default(cuid())
-  user     String
-  variation Variation
-  tracked  Boolean
-  station     Station @relation(fields: [station_id], references: [id], onUpdate: Cascade)
-  station_id   String
-  usbdevice UsbDevice @relation(fields: [usbdevice_id], references: [id])
-  usbdevice_id String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  user        String
+  variation   Variation
+  tracked     Boolean
+  createdAt   DateTime
+  stationId   String
+  usbdeviceId String
+  station     Station   @relation(fields: [stationId], references: [id])
+  usbdevice   UsbDevice @relation(fields: [usbdeviceId], references: [id])
 }
 
 model Subscription {
@@ -56,4 +47,20 @@ model Subscription {
   keys      Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Classroom {
+  id       String    @id @default(cuid())
+  name     String
+  stations Station[]
+}
+
+enum Status {
+  Active
+  Inactive
+}
+
+enum Variation {
+  Connect
+  Disconnect
 }

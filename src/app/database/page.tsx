@@ -12,7 +12,7 @@ type Station = Prisma.StationGetPayload<{
   }
 }>
 
-type Models = 'Station' | 'Event' | 'Device'
+export type Models = 'Station' | 'Event' | 'Device'
 const tabs: Models[] = ['Station', 'Event', 'Device'];
 
 function getFields(type: 'Station' | 'Event' | 'Device') {
@@ -22,41 +22,53 @@ function getFields(type: 'Station' | 'Event' | 'Device') {
     case 'Event': return Object.keys(Prisma.EventScalarFieldEnum)
   }
 }
-
-
-const fetcher = (url: string, data?: any) =>
-  fetch(url, {
-    method: data ? 'POST' : 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  }).then((res) => res.json());
-
+   
 const App = () => {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [searchText, setSearchText] = useState<string>('')
   const [searchField, setSearchField] = useState<string>('id')
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
 
+  const removeSubscription = (subscription: PushSubscription) => {
+    fetch('/api/subscription/remove', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({ subscription }),
+    })
+       .then(response => response.json())
+       .then(data => {
+         console.log('Subscription removed successfully:', data);
+         setSubscription(null);
+       })
+       .catch(error => {
+         console.error('Error removing subscription:', error);
+       });
+   };
+
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
-       Notification.requestPermission().then((permission) => {
-         if (permission === 'granted') {
-           navigator.serviceWorker.ready
-             .then((registration) => registration.pushManager.subscribe({userVisibleOnly: true}))
-             .then((subscription) => {
-               setSubscription(subscription);
-             })
-             .catch((err) => console.error('Failed to subscribe:', err));
-         } else {
-           console.log('Permission denied or not supported');
-         }
-       });
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          navigator.serviceWorker.ready
+            .then((registration) => registration.pushManager.subscribe({ userVisibleOnly: true }))
+            .then((subscription) => {
+              setSubscription(subscription);
+            })
+            .catch((err) => console.error('Failed to subscribe:', err));
+        } else {
+          console.log('Permission denied or not supported');
+          if (subscription) {
+            removeSubscription(subscription);
+          }
+        }
+      });
     } else {
-       console.log('Push Notifications are not supported in this browser');
+      console.log('Push Notifications are not supported in this browser');
     }
-   }, []);
+  }, []);
+
 
 
   useEffect(() => {
@@ -77,11 +89,6 @@ const App = () => {
         });
     }
   }, [subscription]);
-
-  const { data, error, isLoading } = useSWR(
-    `/api/search?text=${searchText}&field=${searchField}&tab=${activeTab}`,
-    fetcher
-  )
   return (
     <div className="h-screen bg-[#131720] font-extralight">
       <div className="flex items-center justify-between p-3 bg-[#0d1016] border-b-[#2d3547] border-b-1 text-white flex-col sm:flex-row">
@@ -97,8 +104,8 @@ const App = () => {
             onChange={e => setSearchField(e.target.value)}
             className="absolute right-0 top-0 bottom-0 w-1/4 border-none outline-none ring-none text-slate-500 bg-[#1d2330] rounded-md"
           >
-            {getFields(activeTab).map(key => (
-              <option value={key} className='bg-[#1d2330]'>{key}</option>
+            {getFields(activeTab).map((key, index) => (
+              <option value={key} key={index} className='bg-[#1d2330]'>{key}</option>
             ))}
           </select>
         </div>
@@ -115,7 +122,7 @@ const App = () => {
         ))}
       </div>
       <div className="space-y-4 flex items-center flex-col">
-        <Stations data={data} isLoading={isLoading} error={error} isMenu={false} />
+        <Stations activeTab={activeTab} searchText={searchText} searchField={searchField} isMenu={false} />
       </div>
     </div>
   );

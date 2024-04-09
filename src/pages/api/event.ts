@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma, PrismaClient } from '@prisma/client';
-import webPush, { PushSubscription } from "web-push";
+import { PrismaClient } from '@prisma/client';
+import webPush, { type PushSubscription } from "web-push";
+import { format } from 'date-fns';
+import { cs } from 'date-fns/locale';
 
 interface SubscriptionKeys{
   p256dh: string,
@@ -22,11 +24,12 @@ export default async function handler(
   const prisma = new PrismaClient();
   console.log(vapidKeys)
   try {
-    let data = req.body;
+    const data = req.body;
 
     console.log(data)
 
-    let usbDevice;
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    let usbDevice: any;
 
     if (data.device.serial_number) {
       usbDevice = await prisma.usbDevice.findFirst({
@@ -72,9 +75,10 @@ export default async function handler(
             id: usbDevice.id,
           },
         },
+        createdAt: format(new Date(), 'dd/MM/yyyy', { locale: cs }),
       },
     });
-    if (data.tracked == true){
+    if (data.tracked === true){
       const subscriptions = await prisma.subscription.findMany();
   
       const sendNotifications = subscriptions.map(async (subscription) => {

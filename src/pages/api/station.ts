@@ -23,8 +23,7 @@ export default async function handler(
           })
         )
       );
-
-      // Create the station with references to the created devices
+      
       return prisma.station.create({
         data: {
           id,

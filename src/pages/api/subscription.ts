@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -19,11 +19,13 @@ export default async function handler(
       });
 
       res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Error saving subscription:', error);
-      res.status(500).json({ error: 'Failed to save subscription' });
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        res.status(200).json({ message: 'Subscription already exists' });
+      } else {
+        console.error('Error saving subscription:', error);
+        res.status(500).json({ message: 'Error saving subscription' });
+      }
     }
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
-  }
+    }
 }
