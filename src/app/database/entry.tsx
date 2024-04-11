@@ -1,25 +1,25 @@
 import { useState } from "react";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import Stations from "./stations";
 
 type Station = Prisma.StationGetPayload<{
   include: {
     devices: true;
     events: true;
-  }
+  };
 }>;
 
 type UsbDevice = Prisma.UsbDeviceGetPayload<{
   include: {
     event: true;
-  }
+  };
 }>;
 
 type Event = Prisma.EventGetPayload<{
   include: {
     station: true;
     usbdevice: true;
-  }
+  };
 }>;
 
 function getPrismaType(obj: any): string {
@@ -30,7 +30,7 @@ function getPrismaType(obj: any): string {
   } else if ('variation' in obj) {
     return 'Event';
   }
-  return ""
+  return "";
 }
 
 interface EntryProps {
@@ -43,36 +43,84 @@ export default function Entry({ obj, variation }: EntryProps) {
   const [data, setData] = useState([]);
 
   const handleBubbleClick = (obj: any) => {
-    setIsStationDataOpen(!isStationDataOpen);
-    setData(obj)
+    if (typeof obj.tracked === 'boolean') {
+      handleTrackerUpdate(obj);
+    } else {
+      setIsStationDataOpen(!isStationDataOpen);
+      setData(obj);
+    }
+  };
+
+  const handleTrackerUpdate = async (event: Event) => {
+    try {
+      const response = await fetch('/api/tracker', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId: event.id }),
+      });
+
+      if (!response.ok) {
+        console.error('Error updating tracker:', await response.json());
+      }
+    } catch (error) {
+      console.error('Error updating tracker:', error);
+    }
   };
 
   return (
     <>
-    <div className="!m-0 w-full text-neutral-100 whitespace-nowrap h-[37px] ">
-      {Object.keys(obj).map((key) => (
-        <>
-          {Array.isArray(obj[key]) ? (
-            <div key={key} className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]">
-              <div className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"}`} onClick={() => handleBubbleClick(obj[key])}>
-                {obj[key].length}
+      <div className="!m-0 w-full text-neutral-100 whitespace-nowrap h-[37px]">
+        {Object.keys(obj).map((key) => (
+          <>
+            {Array.isArray(obj[key]) ? (
+              <div
+                key={key}
+                className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]"
+              >
+                <div
+                  className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"}`}
+                  onClick={() => handleBubbleClick(obj[key])}
+                >
+                  {obj[key].length}
+                </div>
               </div>
-            </div>
-          ) : Object.prototype.toString.call(obj[key]) === "[object Object]" ? (
-            <div key={key} className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]">
-              <div className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"} `} onClick={() => handleBubbleClick([obj[key]] as [any])}>
-                {getPrismaType(obj[key])}
+            ) : Object.prototype.toString.call(obj[key]) === "[object Object]" ? (
+              <div
+                key={key}
+                className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]"
+              >
+                <div
+                  className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"} `}
+                  onClick={() => handleBubbleClick([obj[key]] as [any])}
+                >
+                  {getPrismaType(obj[key])}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div key={key} onClick={() => {navigator.clipboard.writeText(obj[key])}} className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}>
-              {JSON.stringify(obj[key])}
-            </div>
-          )}
-        </>
-      ))}
-    </div>
-    {isStationDataOpen ? <Stations data={data} isMenu={true} /> : ""}
+            ) : typeof obj[key] === 'boolean' ? (
+              <div
+                key={key}
+                onClick={() => handleBubbleClick(obj)}
+                className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+              >
+                {JSON.stringify(obj[key])}
+              </div>
+            ) : (
+              <div
+                key={key}
+                onClick={() => {
+                  navigator.clipboard.writeText(obj[key]);
+                }}
+                className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+              >
+                {obj[key]}
+              </div>
+            )}
+          </>
+        ))}
+      </div>
+      {isStationDataOpen ? <Stations isMenu={true} externalData={data} /> : ""}
     </>
   );
 }

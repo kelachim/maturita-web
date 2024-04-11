@@ -24,36 +24,35 @@ const fetcher = (url: string, data?: any) =>
     body: data ? JSON.stringify(data) : undefined,
   }).then((res) => res.json());
 
-const FieldsCheckboxes = ({ fields, setFields }: { fields: Fields, setFields: (fields: Fields) => void }) => {
-  const toggleField = (field: keyof Fields) => {
-    setFields((prevFields) => ({
-      ...prevFields,
-      [field]: !prevFields[field],
-    }));
+  const FieldsCheckboxes = ({ fields, setFields }: { fields: Fields, setFields: (fields: Fields) => void }) => {
+    const toggleField = (field: keyof Fields) => {
+      setFields((prevFields) => ({
+        ...prevFields,
+        [field]: !prevFields[field],
+      }));
+    };
+  
+    return (
+      <>
+        {Object.keys(fields).slice(1).map((field) => (
+          <Fragment key={field}>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id={field}
+                checked={fields[field as keyof Fields]}
+                onChange={() => toggleField(field as keyof Fields)}
+                className="h-5 w-5 text-blue-600 outline-none border-none"
+              />
+              <label htmlFor={field} className="ml-2 text-sm font-medium text-white">
+                {field}
+              </label>
+            </div>
+          </Fragment>
+        ))}
+      </>
+    );
   };
-
-  return (
-    <>
-      {Object.keys(fields).map((field) => (
-        <Fragment key={field}>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id={field}
-              checked={fields[field as keyof Fields]}
-              onChange={() => toggleField(field as keyof Fields)}
-              className="form-checkbox h-5 w-5 text-blue-600 outline-none border-none"
-            />
-            <label htmlFor={field} className="ml-2 text-sm font-medium text-white">
-              {field}
-            </label>
-          </div>
-        </Fragment>
-      ))}
-    </>
-  );
-};
-
 function MyDropdown({ fields, setFields }: { fields: Fields, setFields: (fields: Fields) => void }) {
   return (
     <Menu>
@@ -93,16 +92,15 @@ interface SearchProps {
 }
 
 type Fields =
-  | Record<"id" | "name" | "status" | "devices" | "events", boolean>
+  | Record<"id" | "name" | "devices" | "events", boolean>
   | Record<"id" | "vendor_id" | "product_id" | "files" | "description" | "serial_number" | "event" | "station", boolean>
-  | Record<"id" | "user" | "variation" | "tracked" | "station" | "station_id" | "usbdevice" | "createdAt" | "updatedAt", boolean>
+  | Record<"id" | "user" | "variation" | "tracked" | "station" | "usbdevice" | "createdAt", boolean>
 
 export default function Stations({ searchText, searchField, activeTab, isMenu, externalData }: StationsProps) {
   const fieldsMapping: Record<Models, Fields> = {
     Station: {
       id: true,
       name: false,
-      status: false,
       devices: false,
       events: false,
     },
@@ -122,10 +120,8 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
       variation: false,
       tracked: false,
       station: false,
-      station_id: false,
       usbdevice: false,
       createdAt: false,
-      updatedAt: false,
     },
   };
 
@@ -137,7 +133,6 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
 
   const { data, error, isLoading } = !externalData ? useSWR(['/api/search', { searchText, searchField, activeTab, fields } as SearchProps], ([url, data]) => fetcher(url, data)) : { data: externalData, error: null, isLoading: null }
   if (error) {
-    console.log(error)
     return <div className='text-white'> Failed to load! ❌ </div>;
   }
   if (isLoading) return (

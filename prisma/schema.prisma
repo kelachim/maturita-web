@@ -10,7 +10,6 @@ datasource db {
 model Station {
   id          String      @id @default(cuid())
   name        String
-  status      Status      @default(Inactive)
   classroomId String?
   events      Event[]
   classroom   Classroom?  @relation(fields: [classroomId], references: [id])
