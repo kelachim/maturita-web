@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
 import Stations from "./stations";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Station = Prisma.StationGetPayload<{
   include: {
@@ -43,29 +45,45 @@ export default function Entry({ obj, variation }: EntryProps) {
   const [data, setData] = useState([]);
 
   const handleBubbleClick = (obj: any) => {
-    if (typeof obj.tracked === 'boolean') {
-      handleTrackerUpdate(obj);
-    } else {
       setIsStationDataOpen(!isStationDataOpen);
       setData(obj);
-    }
   };
 
-  const handleTrackerUpdate = async (event: Event) => {
+  const handleTrackerUpdate = async (usbdevice: UsbDevice) => {
     try {
       const response = await fetch('/api/tracker', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ eventId: event.id }),
+        body: JSON.stringify({ deviceId: usbdevice.id }),
       });
-
       if (!response.ok) {
         console.error('Error updating tracker:', await response.json());
+      } else {
+        toast.success('Tracker updated!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
     } catch (error) {
       console.error('Error updating tracker:', error);
+      toast.error('Error updating tracker. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
     }
   };
 
@@ -98,10 +116,10 @@ export default function Entry({ obj, variation }: EntryProps) {
                   {getPrismaType(obj[key])}
                 </div>
               </div>
-            ) : typeof obj[key] === 'boolean' ? (
+            ) : typeof obj[key] === 'boolean' && getPrismaType(obj) === 'UsbDevice' ? (
               <div
                 key={key}
-                onClick={() => handleBubbleClick(obj)}
+                onClick={() => handleTrackerUpdate(obj[key])}
                 className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 {JSON.stringify(obj[key])}

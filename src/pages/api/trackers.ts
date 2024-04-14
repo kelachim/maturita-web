@@ -1,17 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, UsbDevice } from "@prisma/client"
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const prisma = new PrismaClient();
-  console.log(req.body.eventId)
+ 
+  const data = prisma.usbDevice.findMany({where: {tracked: true}, select: {vendor_id: true, product_id: true, description: true, serial_number: true, files: true}});
 
-  const { eventId } = req.body;
-
-  const event = await prisma.event.findFirst({where: {id: eventId}})
-  const data = await prisma.event.update({where: {id: eventId}, data: {tracked: !event?.tracked}})
-
-  res.status(200).json([]);
+  res.status(200).json(data || []);
 }

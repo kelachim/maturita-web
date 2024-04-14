@@ -25,6 +25,7 @@ model UsbDevice {
   serial_number String?
   stationId     String?
   event         Event[]
+  tracked       Boolean  @default(false)
   station       Station? @relation(fields: [stationId], references: [id])
 }
 
