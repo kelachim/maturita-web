@@ -6,6 +6,7 @@ import type { Models } from "./page"
 //@ts-ignore
 import { Menu, Transition } from '@headlessui/react'
 import useSWR from "swr";
+import Cookies from 'js-cookie';
 
 function removeFields(data: any[], fieldsToRemove: any[]) {
   return data.map((obj: any) => {
@@ -24,36 +25,40 @@ const fetcher = (url: string, data?: any) =>
     body: data ? JSON.stringify(data) : undefined,
   }).then((res) => res.json());
 
-  const FieldsCheckboxes = ({ fields, setFields }: { fields: Fields, setFields: (fields: Fields) => void }) => {
-    const toggleField = (field: keyof Fields) => {
-      setFields((prevFields) => ({
-        ...prevFields,
-        [field]: !prevFields[field],
-      }));
+const FieldsCheckboxes = ({ fields, activeTab, setFields }: { fields: Fields, activeTab: Models, setFields: (fields: Fields) => void }) => {
+  const toggleField = (field: keyof Fields) => {
+    const newFields = {
+      ...fields,
+      [field]: !fields[field],
     };
-  
-    return (
-      <>
-        {Object.keys(fields).slice(1).map((field) => (
-          <Fragment key={field}>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id={field}
-                checked={fields[field as keyof Fields]}
-                onChange={() => toggleField(field as keyof Fields)}
-                className="h-5 w-5 text-blue-600 outline-none border-none"
-              />
-              <label htmlFor={field} className="ml-2 text-sm font-medium text-white">
-                {field}
-              </label>
-            </div>
-          </Fragment>
-        ))}
-      </>
-    );
+    Cookies.set(`fields-${activeTab}`, JSON.stringify(newFields));
+    const key = `fields-${activeTab as Models}`;
+    const storedFields = Cookies.get(key);
+    setFields(JSON.parse(storedFields!));
   };
-function MyDropdown({ fields, setFields }: { fields: Fields, setFields: (fields: Fields) => void }) {
+
+  return (
+    <>
+      {Object.keys(fields).slice(1).map((field) => (
+        <Fragment key={field}>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id={field}
+              checked={fields[field as keyof Fields]}
+              onChange={() => toggleField(field as keyof Fields)}
+              className="h-5 w-5 text-blue-600 outline-none border-none"
+            />
+            <label htmlFor={field} className="ml-2 text-sm font-medium text-white">
+              {field}
+            </label>
+          </div>
+        </Fragment>
+      ))}
+    </>
+  );
+};
+function MyDropdown({ fields, activeTab, setFields }: { fields: Fields, activeTab: Models, setFields: (fields: Fields) => void }) {
   return (
     <Menu>
       <Menu.Button className="px-2 relative inline-block text-left peer">+</Menu.Button>
@@ -68,7 +73,7 @@ function MyDropdown({ fields, setFields }: { fields: Fields, setFields: (fields:
       >
         <Menu.Items className="rounded-md absolute right-0 w-56 origin-top-right divide-y divide-gray-100 bg-[#0a0c10] shadow-lg focus:outline-none peer-[-translate-y-full]:translate-y-0">
           <div className="px-1 py-1">
-            <FieldsCheckboxes fields={fields} setFields={setFields} />
+            <FieldsCheckboxes fields={fields} activeTab={activeTab} setFields={setFields} />
           </div>
         </Menu.Items>
       </Transition>
@@ -93,7 +98,7 @@ interface SearchProps {
 
 type Fields =
   | Record<"id" | "name" | "devices" | "events", boolean>
-  | Record<"id" | "vendor_id" | "product_id" | "files" | "description" | "serial_number" | "event" | "station", boolean>
+  | Record<"id" | "tracked" | "vendor_id" | "product_id" | "files" | "description" | "serial_number" | "event" | "station", boolean>
   | Record<"id" | "user" | "variation" | "tracked" | "station" | "usbdevice" | "createdAt", boolean>
 
 export default function Stations({ searchText, searchField, activeTab, isMenu, externalData }: StationsProps) {
@@ -106,6 +111,7 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
     },
     Device: {
       id: true,
+      tracked: false,
       vendor_id: false,
       product_id: false,
       files: false,
@@ -125,10 +131,16 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
     },
   };
 
-  const [fields, setFields] = useState<Fields>(fieldsMapping[activeTab as Models]);
+  const [fields, setFields] = useState<Fields>(() => {
+    const key = `fields-${activeTab as Models}`;
+    const storedFields = Cookies.get(key);
+    return storedFields ? JSON.parse(storedFields) : fieldsMapping[activeTab as Models];
+  });
 
   useEffect(() => {
-    setFields(fieldsMapping[activeTab as Models])
+    const key = `fields-${activeTab as Models}`;
+    const storedFields = Cookies.get(key);
+    setFields(storedFields ? JSON.parse(storedFields) : fieldsMapping[activeTab as Models])
   }, [activeTab]);
 
   const { data, error, isLoading } = !externalData ? useSWR(['/api/search', { searchText, searchField, activeTab, fields } as SearchProps], ([url, data]) => fetcher(url, data)) : { data: externalData, error: null, isLoading: null }
@@ -153,13 +165,14 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
           </div>
         ))}
         {!isMenu && (
-          <MyDropdown fields={fields} setFields={setFields} />
+          <MyDropdown fields={fields} activeTab={activeTab!} setFields={setFields} />
         )}
       </div>
       {data.map((station: Station) => (
         <Entry
           obj={station}
           variation={isMenu}
+          tab={activeTab}
         />
       ))}
     </div>

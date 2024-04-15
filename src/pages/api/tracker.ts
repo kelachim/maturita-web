@@ -6,12 +6,11 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const prisma = new PrismaClient();
-  console.log(req.body.eventId)
 
-  const { deviceId: eventId } = req.body;
+  const { deviceId } = req.body;
 
-  const event = await prisma.usbDevice.findFirst({where: {id: eventId}})
-  const data = await prisma.usbDevice.update({where: {id: eventId}, data: {tracked: !event?.tracked}})
+  const event = await prisma.usbDevice.findFirst({where: {id: deviceId}})
+  const data = await prisma.usbDevice.update({where: {id: deviceId}, data: {tracked: !event?.tracked}})
 
   res.status(200).json(data);
 }

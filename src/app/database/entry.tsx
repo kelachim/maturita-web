@@ -25,7 +25,7 @@ type Event = Prisma.EventGetPayload<{
 }>;
 
 function getPrismaType(obj: any): string {
-  if ('status' in obj) {
+  if ('name' in obj) {
     return 'Station';
   } else if ('vendor_id' in obj) {
     return 'UsbDevice';
@@ -38,9 +38,10 @@ function getPrismaType(obj: any): string {
 interface EntryProps {
   obj: any;
   variation: boolean;
+  tab: any;
 }
 
-export default function Entry({ obj, variation }: EntryProps) {
+export default function Entry({ obj, variation, tab }: EntryProps) {
   const [isStationDataOpen, setIsStationDataOpen] = useState(false);
   const [data, setData] = useState([]);
 
@@ -56,7 +57,7 @@ export default function Entry({ obj, variation }: EntryProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deviceId: usbdevice.id }),
+        body: JSON.stringify({deviceId: usbdevice.id}),
       });
       if (!response.ok) {
         console.error('Error updating tracker:', await response.json());
@@ -116,10 +117,17 @@ export default function Entry({ obj, variation }: EntryProps) {
                   {getPrismaType(obj[key])}
                 </div>
               </div>
-            ) : typeof obj[key] === 'boolean' && getPrismaType(obj) === 'UsbDevice' ? (
+            ) : typeof obj[key] === 'boolean' && tab === "Device" ? (
               <div
                 key={key}
-                onClick={() => handleTrackerUpdate(obj[key])}
+                onClick={() => handleTrackerUpdate(obj)}
+                className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+              >
+                {JSON.stringify(obj[key])}
+              </div>
+            ) : typeof obj[key] === 'boolean' ?(
+              <div
+                key={key}
                 className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 {JSON.stringify(obj[key])}
@@ -129,6 +137,16 @@ export default function Entry({ obj, variation }: EntryProps) {
                 key={key}
                 onClick={() => {
                   navigator.clipboard.writeText(obj[key]);
+                  toast.info('Copied the field into clipboard.', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "colored",
+                  });
                 }}
                 className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >

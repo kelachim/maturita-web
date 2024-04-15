@@ -34,7 +34,7 @@ model Event {
   user        String
   variation   Variation
   tracked     Boolean
-  createdAt   DateTime
+  createdAt   String
   stationId   String
   usbdeviceId String
   station     Station   @relation(fields: [stationId], references: [id])
