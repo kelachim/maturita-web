@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { useSearchParams } from 'next/navigation'
 import Stations from './stations'
 import webPush from "web-push"
+import Link from 'next/link';
 
 type Station = Prisma.StationGetPayload<{
   include: {
@@ -95,8 +96,14 @@ const App = () => {
   return (
     <div className="h-screen bg-[#131720] font-extralight">
       <div className="flex items-center justify-between p-3 bg-[#0d1016] border-b-[#2d3547] border-b-1 text-white flex-col sm:flex-row">
-        <h1 className="text-xl text-slate-500">Usb Guard</h1>
-        <div className="relative w-full sm:w-3/5 lg:w-1/3">
+        <div className='flex text-slate-600 gap-14 items-center justify-center'>
+          <h1 className="text-xl text-slate-500">Usb Guard</h1>
+          <div className="flex gap-3">
+            <Link href="/" className='text-base'>Dashboard</Link>
+            <div className="text-base cursor-pointer">Database</div>
+          </div>
+        </div>
+        <div className="relative w-full sm:w-3/5 lg:w-1/3 flex flex-col sm:flex-row items-center">
           <input
             type="search"
             onChange={(e) => setSearchText(e.target.value)}
@@ -107,7 +114,7 @@ const App = () => {
           <select
             onChange={(e) => setSearchField(e.target.value)}
             defaultValue={''}
-            className="absolute right-0 top-0 bottom-0 w-1/4 border-none outline-none ring-none text-slate-500 bg-[#1d2330] rounded-md"
+            className="sm:absolute sm:p-0 p-3 right-0 top-0 bottom-0 w-1/4 border-none outline-none ring-none text-slate-500 bg-[#1d2330] rounded-md"
           >
             {getFields(activeTab).map((key, index) => (
               <option value={key} key={index} className="bg-[#1d2330]">

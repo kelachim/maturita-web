@@ -90,17 +90,22 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
 
   return (
     <>
-      <div className="!m-0 w-full text-neutral-100 whitespace-nowrap h-[37px]">
+      <div className="!m-0 w-full cursor-pointer text-neutral-100 whitespace-nowrap h-[37px]">
         {Object.keys(obj).map((key) => (
           <>
             {Array.isArray(obj[key]) ? (
               <div
                 key={key}
-                className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]"
+                className={`inline-block ${key === "files" || obj[key].length === 0 ? "cursor-auto" : "cursor-help"} hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 <div
                   className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"}`}
-                  onClick={() => handleBubbleClick(obj[key])}
+                  onClick={() => {
+                    if (obj[key].length !== 0)
+                    {
+                      handleBubbleClick(obj[key])
+                    }
+                  }}
                 >
                   {obj[key].length}
                 </div>
@@ -108,7 +113,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
             ) : Object.prototype.toString.call(obj[key]) === "[object Object]" ? (
               <div
                 key={key}
-                className="inline-block hide-scrollbar select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]"
+                className="inline-block hide-scrollbar cursor-help select-none overflow-x-auto overflow-y-hidden border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]"
               >
                 <div
                   className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"} `}
@@ -121,7 +126,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
               <div
                 key={key}
                 onClick={() => handleTrackerUpdate(obj)}
-                className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+                className={`inline-block ${variation ? "bg-[#1b202b] cursor-pointer hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 {JSON.stringify(obj[key])}
               </div>
@@ -148,7 +153,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
                     theme: "colored",
                   });
                 }}
-                className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+                className={`inline-block ${variation ? "bg-[#1b202b] cursor-pointer hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 {obj[key]}
               </div>

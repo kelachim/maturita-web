@@ -38,24 +38,21 @@ const FieldsCheckboxes = ({ fields, activeTab, setFields }: { fields: Fields, ac
   };
 
   return (
-    <>
+    <div className="space-y-1">
       {Object.keys(fields).slice(1).map((field) => (
         <Fragment key={field}>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id={field}
-              checked={fields[field as keyof Fields]}
-              onChange={() => toggleField(field as keyof Fields)}
-              className="h-5 w-5 text-blue-600 outline-none border-none"
-            />
-            <label htmlFor={field} className="ml-2 text-sm font-medium text-white">
-              {field}
-            </label>
+          <div
+            className={`flex items-center rounded-md p-2 border-2 ${fields[field as keyof Fields]
+                ? 'border-green-500 text-green-500'
+                : 'border-white text-white'
+              }`}
+            onClick={() => toggleField(field as keyof Fields)}
+          >
+            <span className="text-sm font-medium">{field}</span>
           </div>
         </Fragment>
       ))}
-    </>
+    </div>
   );
 };
 function MyDropdown({ fields, activeTab, setFields }: { fields: Fields, activeTab: Models, setFields: (fields: Fields) => void }) {
@@ -153,7 +150,7 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
     </div>
   );
   return (
-    <div className={`overflow-x-auto w-full hide-scrollbar ${isMenu ? "bg-[#1a1f2b] overflow-y-hidden p-1" : "bg-transparent"}`}>
+    <div className={`overflow-x-auto w-full hide-scrollbar ${isMenu ? "bg-[#1a1f2b] overflow-y-hidden p-1 sticky" : "min-h-screen bg-transparent"}`}>
       <div className={`!mt-0 text-lg text-neutral-100 ${isMenu ? "bg-[#1f2634]" : "bg-[#0d1016]"} whitespace-nowrap inline-flex overflow-hidden`}>
         {Object.keys(data && data[0] ? data[0] : {}).map(key => (
           <div
