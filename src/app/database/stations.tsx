@@ -165,11 +165,12 @@ export default function Stations({ searchText, searchField, activeTab, isMenu, e
           <MyDropdown fields={fields} activeTab={activeTab!} setFields={setFields} />
         )}
       </div>
-      {data.map((station: Station) => (
+      {data.map((station: Station, index: number) => (
         <Entry
           obj={station}
           variation={isMenu}
           tab={activeTab}
+          key={index}
         />
       ))}
     </div>
