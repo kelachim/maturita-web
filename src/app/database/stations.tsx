@@ -2,7 +2,7 @@ import type { Station } from "@prisma/client";
 import Image from "next/image";
 import Entry from "./entry";
 import { useState, Fragment, useEffect } from "react";
-import type { Models } from "./page"
+import type { Models } from "./content"
 //@ts-ignore
 import { Menu, Transition } from '@headlessui/react'
 import useSWR from "swr";
