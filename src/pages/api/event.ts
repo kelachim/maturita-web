@@ -25,24 +25,23 @@ export default async function handler(
 
   try {
     const data = req.body;
-
+    console.log(data);
     let usbDevice;
 
-    // Check if the USB device already exists on the station
     const station = await prisma.station.findUnique({
       where: { id: data.station_id },
-      include: { devices: true }
+      include: { devices: true },
     });
 
     if (station) {
-      usbDevice = station.devices.find(device =>
-        device.vendor_id === data.device.vendor_id &&
-        device.product_id === data.device.product_id &&
-        device.serial_number === data.device.serial_number
+      usbDevice = station.devices.find(
+        (device) =>
+          device.vendor_id === data.device.vendor_id &&
+          device.product_id === data.device.product_id &&
+          device.serial_number === data.device.serial_number
       );
     }
 
-    // If the device doesn't exist, create a new one
     if (!usbDevice) {
       usbDevice = await prisma.usbDevice.create({
         data: {
@@ -50,21 +49,46 @@ export default async function handler(
           product_id: data.device.product_id,
           description: data.device.description,
           serial_number: data.device.serial_number,
-          files: data.device.files || []
-        }
+          files: data.device.files || [],
+          station: {
+            connect: {
+              id: data.station_id,
+            },
+          },
+        },
       });
-    }else{
+    } else {
       usbDevice = await prisma.usbDevice.update({
         where: {
-          id: usbDevice.id
+          id: usbDevice.id,
         },
         data: {
           vendor_id: data.device.vendor_id,
           product_id: data.device.product_id,
           description: data.device.description,
           serial_number: data.device.serial_number,
-          files: data.device.files || []
-        }
+          files: data.device.files || [],
+        },
+      });
+    }
+
+    if (data.variation === "Disconnect") {
+      await prisma.usbDevice.update({
+        where: {
+          id: usbDevice.id,
+        },
+        data: {
+          stationId: null,
+        },
+      });
+    } else if (data.variation === "Connect") {
+      await prisma.usbDevice.update({
+        where: {
+          id: usbDevice.id,
+        },
+        data: {
+          stationId: data.station_id,
+        },
       });
     }
 
@@ -76,31 +100,34 @@ export default async function handler(
         tracked: data.tracked,
         station: {
           connect: {
-            id: data.station_id
-          }
+            id: data.station_id,
+          },
         },
         usbdevice: {
           connect: {
-            id: usbDevice.id
-          }
+            id: usbDevice.id,
+          },
         },
         createdAt: format(new Date(), 'dd/MM/yyyy', { locale: cs }),
-      }
+      },
     });
 
     if (data.tracked === true) {
       const subscriptions = await prisma.subscription.findMany();
+
       const sendNotifications = subscriptions.map(async (subscription) => {
         try {
           const pushSubscription: PushSubscription = {
             endpoint: subscription.endpoint,
-            keys: subscription.keys as unknown as SubscriptionKeys
+            keys: subscription.keys as unknown as SubscriptionKeys,
           };
-          const station = await prisma.station.findUnique({ where: { id: data.station_id }});
+          const station = await prisma.station.findUnique({ where: { id: data.station_id } });
+
           const payload = JSON.stringify({
             title: 'Tracked device connected❗',
-            body: `Tracked device connected on station ${station?.name}`
+            body: `Tracked device connected on station ${station?.name}`,
           });
+
           await webPush.sendNotification(pushSubscription, payload, {
             vapidDetails: {
               subject: 'mailto:your@email.com',
@@ -112,6 +139,7 @@ export default async function handler(
           console.error('Error sending notification:', error);
         }
       });
+
       await Promise.all(sendNotifications);
     }
 

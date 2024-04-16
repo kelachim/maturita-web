@@ -68,7 +68,7 @@ function MyDropdown({ fields, activeTab, setFields }: { fields: Fields, activeTa
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="rounded-md absolute right-0 w-56 origin-top-right divide-y divide-gray-100 bg-[#0a0c10] shadow-lg focus:outline-none peer-[-translate-y-full]:translate-y-0">
+        <Menu.Items className="rounded-md absolute right-0 w-56 origin-top-right divide-y divide-gray-100 bg-[#131720] shadow-lg focus:outline-none peer-[-translate-y-full]:translate-y-0">
           <div className="px-1 py-1">
             <FieldsCheckboxes fields={fields} activeTab={activeTab} setFields={setFields} />
           </div>
