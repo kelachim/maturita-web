@@ -12,8 +12,8 @@ interface SubscriptionKeys {
 const vapidKeys = webPush.generateVAPIDKeys();
 
 webPush.setVapidDetails(
-  'mailto:web-push-demo@example.com',
-  "BA7vAUHWcniqnXUmgJIWHrqZAfuAWJ0BxYdNfjXGbBVygM9tRaiqTTvgYgZ5wT1l6Tjtzlfs_uLs0_b0DSMwdTk",
+  'mailto:michal.hrbacek@creativehill.cz',
+  vapidKeys.publicKey,
   vapidKeys.privateKey
 );
 
@@ -130,7 +130,7 @@ export default async function handler(
 
           await webPush.sendNotification(pushSubscription, payload, {
             vapidDetails: {
-              subject: 'mailto:your@email.com',
+              subject: 'mailto:michal.hrbacek@creativehill.cz',
               publicKey: vapidKeys.publicKey,
               privateKey: vapidKeys.privateKey,
             },
