@@ -24,14 +24,16 @@ export default async function handler(
   const prisma = new PrismaClient();
 
   try {
+    console.log('Received request body:', req.body);
     const data = req.body;
-    console.log(data);
+    console.log('Parsed request body:', data);
     let usbDevice;
 
     const station = await prisma.station.findUnique({
       where: { id: data.station_id },
       include: { devices: true },
     });
+    console.log('Found station:', station);
 
     if (station) {
       usbDevice = station.devices.find(
@@ -40,9 +42,11 @@ export default async function handler(
           device.product_id === data.device.product_id &&
           device.serial_number === data.device.serial_number
       );
+      console.log('Found USB device:', usbDevice);
     }
 
     if (!usbDevice) {
+      console.log('Creating new USB device...');
       usbDevice = await prisma.usbDevice.create({
         data: {
           vendor_id: data.device.vendor_id,
@@ -57,7 +61,9 @@ export default async function handler(
           },
         },
       });
+      console.log('Created new USB device:', usbDevice);
     } else {
+      console.log('Updating existing USB device...');
       usbDevice = await prisma.usbDevice.update({
         where: {
           id: usbDevice.id,
@@ -70,9 +76,11 @@ export default async function handler(
           files: data.device.files || [],
         },
       });
+      console.log('Updated USB device:', usbDevice);
     }
-    
+
     if (data.variation === "Disconnect") {
+      console.log('Disconnecting USB device...');
       await prisma.usbDevice.update({
         where: {
           id: usbDevice.id,
@@ -81,7 +89,9 @@ export default async function handler(
           stationId: null,
         },
       });
+      console.log('USB device disconnected');
     } else if (data.variation === "Connect") {
+      console.log('Connecting USB device...');
       await prisma.usbDevice.update({
         where: {
           id: usbDevice.id,
@@ -90,8 +100,10 @@ export default async function handler(
           stationId: data.station_id,
         },
       });
+      console.log('USB device connected');
     }
 
+    console.log('Creating event...');
     const event = await prisma.event.create({
       data: {
         id: data.id,
@@ -111,18 +123,22 @@ export default async function handler(
         createdAt: format(new Date(), 'dd/MM/yyyy', { locale: cs }),
       },
     });
+    console.log('Event created:', event);
 
     if (data.tracked === true) {
+      console.log('Sending notifications...');
       const subscriptions = await prisma.subscription.findMany();
+      console.log('Found subscriptions:', subscriptions);
 
       const sendNotifications = subscriptions.map(async (subscription) => {
         try {
-          console.log(subscription)
+          console.log('Sending notification to subscription:', subscription);
           const pushSubscription: PushSubscription = {
             endpoint: subscription.endpoint,
             keys: subscription.keys as unknown as SubscriptionKeys,
           };
           const station = await prisma.station.findUnique({ where: { id: data.station_id } });
+          console.log('Found station:', station);
 
           const payload = JSON.stringify({
             title: 'Tracked device connected❗',
@@ -136,18 +152,23 @@ export default async function handler(
               privateKey: vapidKeys.privateKey,
             },
           });
+          console.log('Notification sent');
         } catch (error) {
           console.error('Error sending notification:', error);
         }
       });
 
       await Promise.all(sendNotifications);
+      console.log('All notifications sent');
     }
 
+    console.log('Returning response...');
     res.status(200).json(event);
   } catch (error) {
+    console.error('Error handling the request:', error);
     res.status(500).json(error);
   } finally {
     await prisma.$disconnect();
+    console.log('Prisma client disconnected');
   }
 }
