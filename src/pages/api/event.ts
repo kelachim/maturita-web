@@ -125,7 +125,42 @@ export default async function handler(
     });
     console.log('Event created:', event);
 
-    
+    if (data.tracked === true) {
+      console.log('Sending notifications...');
+      const subscriptions = await prisma.subscription.findMany();
+      console.log('Found subscriptions:', subscriptions);
+
+      const sendNotifications = subscriptions.map(async (subscription) => {
+        try {
+          console.log('Sending notification to subscription:', subscription);
+          const pushSubscription: PushSubscription = {
+            endpoint: subscription.endpoint,
+            keys: subscription.keys as unknown as SubscriptionKeys,
+          };
+          const station = await prisma.station.findUnique({ where: { id: data.station_id } });
+          console.log('Found station:', station);
+
+          const payload = JSON.stringify({
+            title: 'Tracked device connected❗',
+            body: `Tracked device connected on station ${station?.name}`,
+          });
+
+          await webPush.sendNotification(pushSubscription, payload, {
+            vapidDetails: {
+              subject: 'mailto:michal.hrbacek@creativehill.cz',
+              publicKey: vapidKeys.publicKey,
+              privateKey: vapidKeys.privateKey,
+            },
+          });
+          console.log('Notification sent');
+        } catch (error) {
+          console.error('Error sending notification:', error);
+        }
+      });
+
+      await Promise.all(sendNotifications);
+      console.log('All notifications sent');
+    }
 
     console.log('Returning response...');
     res.status(200).json(event);
