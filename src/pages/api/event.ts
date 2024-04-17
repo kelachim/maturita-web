@@ -71,7 +71,7 @@ export default async function handler(
         },
       });
     }
-
+    
     if (data.variation === "Disconnect") {
       await prisma.usbDevice.update({
         where: {
@@ -117,6 +117,7 @@ export default async function handler(
 
       const sendNotifications = subscriptions.map(async (subscription) => {
         try {
+          console.log(subscription)
           const pushSubscription: PushSubscription = {
             endpoint: subscription.endpoint,
             keys: subscription.keys as unknown as SubscriptionKeys,
