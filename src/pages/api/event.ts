@@ -130,7 +130,6 @@ export default async function handler(
             id: usbDevice.id,
           },
         },
-        createdAt: format(new Date(), 'dd/MM/yyyy', { locale: cs }),
       },
     });
 

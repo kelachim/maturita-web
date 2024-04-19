@@ -3,6 +3,8 @@ import type { Prisma } from "@prisma/client";
 import Stations from "./stations";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { format } from "date-fns/format";
+import { cs } from "date-fns/locale";
 
 type Station = Prisma.StationGetPayload<{
   include: {
@@ -46,9 +48,19 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
   const [data, setData] = useState([]);
 
   const handleBubbleClick = (obj: any) => {
-      setIsStationDataOpen(!isStationDataOpen);
-      setData(obj);
+    setIsStationDataOpen(!isStationDataOpen);
+    setData(obj);
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'dd/MM/yyyy', { locale: cs });
+  };
+
+  function isValidDateString(dateString: string): boolean {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  }
 
   const handleTrackerUpdate = async (usbdevice: UsbDevice) => {
     try {
@@ -57,7 +69,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({deviceId: usbdevice.id}),
+        body: JSON.stringify({ deviceId: usbdevice.id }),
       });
       if (!response.ok) {
         console.error('Error updating tracker:', await response.json());
@@ -101,8 +113,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
                 <div
                   className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"}`}
                   onClick={() => {
-                    if (obj[key].length !== 0)
-                    {
+                    if (obj[key].length !== 0) {
                       handleBubbleClick(obj[key])
                     }
                   }}
@@ -130,12 +141,32 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
               >
                 {JSON.stringify(obj[key])}
               </div>
-            ) : typeof obj[key] === 'boolean' ?(
+            ) : typeof obj[key] === 'boolean' ? (
               <div
                 key={key}
                 className={`inline-block ${variation ? "bg-[#1b202b] hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >
                 {JSON.stringify(obj[key])}
+              </div>
+            ) : isValidDateString(obj[key]) ? ( // Check if the field is a valid date string
+              <div
+                key={key}
+                onClick={() => {
+                  navigator.clipboard.writeText(obj[key]);
+                  toast.info('Copied the field into clipboard.', {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "colored",
+                  });
+                }}
+                className={`inline-block ${variation ? "bg-[#1b202b] cursor-pointer hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
+              >
+                {formatDate(obj[key])} {/* Format the date string */}
               </div>
             ) : (
               <div
