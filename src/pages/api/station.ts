@@ -54,7 +54,6 @@ export default async function handler(
           name: name.trim(),
           devices: {
             connect: createdDevices.map((device) => ({ id: device.id })),
-            disconnect: existingDevices.map((device) => ({ id: device.id })),
           },
         },
         create: {

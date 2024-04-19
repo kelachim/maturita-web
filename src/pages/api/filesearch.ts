@@ -9,9 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const events = await prisma.event.findMany({
             where: {
                 variation: Variation.Connect,
-                createdAt: {
-                    gte: new Date(Date.now() - 604800000),
-                },
                 usbdevice: {
                     files: {
                         has: filename as string

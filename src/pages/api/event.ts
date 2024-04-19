@@ -62,8 +62,8 @@ export default async function handler(
         },
       });
       console.log('Created new USB device:', usbDevice);
-    } else {
-      console.log('Updating existing USB device...');
+    } else if (data.variation === "Connect") {
+      console.log('Updating existing USB device... files');
       usbDevice = await prisma.usbDevice.update({
         where: {
           id: usbDevice.id,
@@ -76,7 +76,19 @@ export default async function handler(
           files: data.device.files || [],
         },
       });
-      console.log('Updated USB device:', usbDevice);
+    }else{
+      console.log('Updating existing USB device... no files');
+      usbDevice = await prisma.usbDevice.update({
+        where: {
+          id: usbDevice.id,
+        },
+        data: {
+          vendor_id: data.device.vendor_id,
+          product_id: data.device.product_id,
+          description: data.device.description,
+          serial_number: data.device.serial_number,
+        },
+      });
     }
 
     if (data.variation === "Disconnect") {
@@ -100,10 +112,8 @@ export default async function handler(
           stationId: data.station_id,
         },
       });
-      console.log('USB device connected');
     }
 
-    console.log('Creating event...');
     const event = await prisma.event.create({
       data: {
         id: data.id,
@@ -123,7 +133,6 @@ export default async function handler(
         createdAt: format(new Date(), 'dd/MM/yyyy', { locale: cs }),
       },
     });
-    console.log('Event created:', event);
 
     if (data.tracked === true) {
       console.log('Sending notifications...');
@@ -141,8 +150,8 @@ export default async function handler(
           console.log('Found station:', station);
 
           const payload = JSON.stringify({
-            title: 'Tracked device connected❗',
-            body: `Tracked device connected on station ${station?.name}`,
+            title: 'New tracked device event❗',
+            body: `New tracked device event on station ${station?.name}`,
           });
 
           await webPush.sendNotification(pushSubscription, payload, {
