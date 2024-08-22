@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma, PrismaClient, Station } from '@prisma/client';
+import prisma from '../../../utils/prisma'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
-  const prisma = new PrismaClient();
 
   try {
     const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;

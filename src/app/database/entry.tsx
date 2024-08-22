@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Prisma } from "@prisma/client";
 import Stations from "./stations";
 import { toast } from 'react-toastify';
@@ -46,6 +46,7 @@ interface EntryProps {
 export default function Entry({ obj, variation, tab }: EntryProps) {
   const [isStationDataOpen, setIsStationDataOpen] = useState(false);
   const [data, setData] = useState([]);
+  const booleanFieldRef = useRef(null);
 
   const handleBubbleClick = (obj: any) => {
     setIsStationDataOpen(!isStationDataOpen);
@@ -74,6 +75,11 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
       if (!response.ok) {
         console.error('Error updating tracker:', await response.json());
       } else {
+        // Directly update the DOM without causing a re-render
+        if (booleanFieldRef.current) {
+          usbdevice.tracked = !usbdevice.tracked; // Toggle the tracked state
+          booleanFieldRef.current.innerText = JSON.stringify(usbdevice.tracked);
+        }
         toast.success('Tracker updated!', {
           position: "top-right",
           autoClose: 3000,
@@ -113,7 +119,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
                 <div
                   className={`rounded-sm text-center ${variation ? "bg-[#2d3648]" : "bg-[#262d3a]"}`}
                   onClick={() => {
-                    if (obj[key].length !== 0) {
+                    if (obj[key].length !== 0 && key !== "files") {
                       handleBubbleClick(obj[key])
                     }
                   }}
@@ -136,6 +142,7 @@ export default function Entry({ obj, variation, tab }: EntryProps) {
             ) : typeof obj[key] === 'boolean' && tab === "Device" ? (
               <div
                 key={key}
+                ref={booleanFieldRef} // Attach ref here
                 onClick={() => handleTrackerUpdate(obj)}
                 className={`inline-block ${variation ? "bg-[#1b202b] cursor-pointer hover:bg-[#222835]" : "bg-[#14181f] hover:bg-[#202631]"} overflow-y-hidden hide-scrollbar overflow-x-auto border-[1px] p-[6px] w-[200px] h-[37px] border-t-0 border-l-0 border-[#212633]`}
               >

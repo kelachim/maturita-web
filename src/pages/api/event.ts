@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import webPush, { type PushSubscription } from "web-push";
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
-
+import prisma from '../../utils/prisma'
 interface SubscriptionKeys {
   p256dh: string,
   auth: string
@@ -21,8 +21,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const prisma = new PrismaClient();
-
   try {
     console.log('Received request body:', req.body);
     const data = req.body;

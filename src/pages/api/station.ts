@@ -1,7 +1,6 @@
-import { PrismaClient, UsbDevice } from '@prisma/client';
+import type { UsbDevice } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
-
-const prisma = new PrismaClient();
+import prisma from '../../utils/prisma'
 
 export default async function handler(
   req: NextApiRequest,

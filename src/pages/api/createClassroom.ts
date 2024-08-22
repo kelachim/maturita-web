@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import prisma from '../../utils/prisma'
 import { PrismaClient, type Station } from "@prisma/client"
 
 export default async function handler(
@@ -6,7 +7,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    const prisma = new PrismaClient();
 
     const { name, stationIds } = req.body;
     console.log(name, stationIds)

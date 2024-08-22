@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient, type Station } from "@prisma/client"
+import prisma from '../../utils/prisma'
+import type { Station } from "@prisma/client"
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const prisma = new PrismaClient();
 
   const stations = await prisma.station.findMany()
 

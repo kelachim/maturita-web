@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 import React, { useEffect, useMemo, useState } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import 'tailwindcss/tailwind.css';
 import type { Station } from '@prisma/client';
 import { format } from 'date-fns'
@@ -9,6 +9,8 @@ import { cs } from "date-fns/locale";
 import Link from "next/link";
 import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
+
+const CLASSROOMS_KEY = '/api/classrooms';
 
 const fetcher = (url: string) =>
   fetch(url, {
@@ -62,6 +64,8 @@ const CreateClassroomDialog = ({ open, onOpenChange }) => {
         setClassroomName('');
         setSelectedStations([]);
         onOpenChange(false);
+        // Revalidate the classrooms data
+        mutate(CLASSROOMS_KEY);
       } else {
         const errorData = await response.json();
         console.error('Error creating classroom:', errorData.message);
@@ -181,6 +185,8 @@ const EditClassroomDialog = ({ open, onOpenChange, classroom }) => {
 
       if (response.ok) {
         onOpenChange(false);
+        // Revalidate the classrooms data
+        mutate(CLASSROOMS_KEY);
       } else {
         const errorData = await response.json();
         console.error('Error updating classroom:', errorData.message);
@@ -198,6 +204,8 @@ const EditClassroomDialog = ({ open, onOpenChange, classroom }) => {
 
       if (response.ok) {
         onOpenChange(false);
+        // Revalidate the classrooms data
+        mutate(CLASSROOMS_KEY);
       } else {
         const errorData = await response.json();
         console.error('Error deleting classroom:', errorData.message);
@@ -221,7 +229,7 @@ const EditClassroomDialog = ({ open, onOpenChange, classroom }) => {
               Classroom Name
             </label>
             <input
-              className="Input outline-none"
+              className="Input outline-none text-black"
               id="classroom-name"
               value={classroomName}
               onChange={(e) => setClassroomName(e.target.value)}
@@ -308,7 +316,7 @@ const App = () => {
   const [isEditClassroomDialogOpen, setIsEditClassroomDialogOpen] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
 
-  const { data, isLoading } = useSWR("/api/classrooms", fetcher);
+  const { data, isLoading, mutate } = useSWR(CLASSROOMS_KEY, fetcher);
   const { data: device } = useSWR(
     filename ? `/api/filesearch?filename=${filename}` : null,
     fetcher
@@ -394,6 +402,7 @@ const App = () => {
           <CreateClassroomDialog
             open={isCreateClassroomDialogOpen}
             onOpenChange={setIsCreateClassroomDialogOpen}
+            mutate={mutate}
           />
         )}
         {isEditClassroomDialogOpen && selectedClassroom && (
@@ -401,6 +410,7 @@ const App = () => {
             open={isEditClassroomDialogOpen}
             onOpenChange={setIsEditClassroomDialogOpen}
             classroom={selectedClassroom}
+            mutate={mutate}
           />
         )}
       </div>

@@ -1,74 +1,81 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient } from "@prisma/client"
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { PrismaClient } from "@prisma/client";
+import { z } from 'zod';
 
-export type Models = 'Station' | 'Event' | 'Device'
+const prisma = new PrismaClient();
 
-type Fields =
-  | Record<"id" | "name" | "status" | "devices" | "events", boolean>
-  | Record<"id" | "vendor_id" | "product_id" | "files" | "description" | "serial_number" | "event" | "station", boolean>
-  | Record<"id" | "user" | "variation" | "tracked" | "station" | "station_id" | "usbdevice" | "createdAt" | "updatedAt", boolean>
+// Define types
+type Model = 'Station' | 'Event' | 'Device';
 
-interface SearchProps{
-  searchText: string;
-  searchField: string;
-  activeTab: Models;
-  fields: Fields;
+const searchPropsSchema = z.object({
+  searchText: z.string(),
+  searchField: z.string(),
+  activeTab: z.enum(['Station', 'Event', 'Device']),
+  fields: z.record(z.boolean())
+});
+
+function createWhereClause(searchText: string, searchField: string) {
+  return searchText ? {
+    [searchField]: {
+      contains: searchText,
+      mode: 'insensitive' as const,
+    }
+  } : {};
+}
+
+function createSelectClause(fields: Record<string, boolean>, activeTab: Model) {
+  const select = Object.entries(fields).reduce((acc, [key, value]) => {
+    if (value) acc[key] = true;
+    return acc;
+  }, { id: true } as Record<string, boolean>); // Always include 'id'
+  
+  return Object.keys(select).length > 1 ? { select } : {};
 }
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<any[] | null>
+  res: NextApiResponse
 ) {
-  const { searchText, searchField, activeTab, fields }: SearchProps = req.body;
-
-  const prisma = new PrismaClient();
-
-  let whereClause = {};
-
-  if (searchText) {
-    whereClause = {
-      //@ts-ignore
-      [searchField]: {
-        contains: searchText,
-        mode: 'insensitive',
-      },
-    };
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  let selectFields = {};
-  if (fields) {
-    const fieldMap = fields as Fields;
-    selectFields = { select: { ...fields, ...fieldMap } };
-  } else {
-    selectFields = { select: fields };
+  try {
+    const { searchText, searchField, activeTab, fields } = searchPropsSchema.parse(req.body);
+
+    const whereClause = createWhereClause(searchText, searchField);
+    const selectClause = createSelectClause(fields);
+
+    let data;
+    switch (activeTab) {
+      case 'Station':
+        data = await prisma.station.findMany({
+          where: whereClause,
+          ...selectClause,
+        });
+        break;
+      case 'Event':
+        data = await prisma.event.findMany({
+          where: whereClause,
+          ...selectClause,
+        });
+        break;
+      case 'Device':
+        data = await prisma.usbDevice.findMany({
+          where: whereClause,
+          ...selectClause,
+        });
+        break;
+    }
+    
+    res.status(200).json(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid request body', details: error.errors });
+    }
+    console.error('Unexpected error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    await prisma.$disconnect();
   }
-
-  let data;
-  switch (activeTab) {
-    case 'Station':
-      data = await prisma.station.findMany({
-        where: whereClause,
-        ...selectFields,
-      });
-      break;
-
-    case 'Event':
-      data = await prisma.event.findMany({
-        where: whereClause,
-        ...selectFields,
-      });
-      break;
-
-    case 'Device':
-      data = await prisma.usbDevice.findMany({
-        where: whereClause,
-        ...selectFields,
-      });
-      break;
-
-    default:
-      res.status(400).json([]);
-      return;
-  }
-  res.status(200).json(data);
 }
