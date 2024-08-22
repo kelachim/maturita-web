@@ -1,6 +1,5 @@
 "use client"
 import React, { Suspense, useEffect, useState } from 'react';
-import 'tailwindcss/tailwind.css';
 import { Prisma } from '@prisma/client';
 import { useSearchParams } from 'next/navigation'
 import Stations from './stations'
