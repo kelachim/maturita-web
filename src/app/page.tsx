@@ -2,7 +2,6 @@
 import Image from "next/image"
 import React, { useEffect, useMemo, useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import 'tailwindcss/tailwind.css';
 import type { Station } from '@prisma/client';
 import { format } from 'date-fns'
 import { cs } from "date-fns/locale";
